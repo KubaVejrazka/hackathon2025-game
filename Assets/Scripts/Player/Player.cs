@@ -1,21 +1,27 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking.PlayerConnection;
 
 public class Player : MonoBehaviour
 {
     public Vector3 coordinates { get; private set; }
 
+    private Queue<MovementRequest> movementQueue = new Queue<MovementRequest>();
+    private bool isMoving = false;
+
     void Awake()
     {
         UpdateCoordinates();
-
         Debug.Log($"Player coordinates: {coordinates}");
     }
 
     void Start()
     {
-        Move(Vector3.forward, 2, 0.5f); // Example move command
+        EnqueueMove(Vector3.right, 2, 1f);
+        EnqueueMove(Vector3.back, 2, 1f);
+        EnqueueMove(Vector3.left, 2, 1f);
+        EnqueueMove(Vector3.forward, 4, 1f);
+        EnqueueMove(Vector3.left, 2, 1f);
     }
 
     private void UpdateCoordinates()
@@ -27,33 +33,54 @@ public class Player : MonoBehaviour
         );
     }
 
-    public void Move(Vector3 direction, int distance, float speed)
+    public void EnqueueMove(Vector3 direction, int distance, float speed)
+    {
+        movementQueue.Enqueue(new MovementRequest(direction, distance, speed * 0.5f));
+        if (!isMoving)
+        {
+            StartCoroutine(ProcessMovementQueue());
+        }
+    }
+
+    private IEnumerator ProcessMovementQueue()
+    {
+        isMoving = true;
+
+        while (movementQueue.Count > 0)
+        {
+            MovementRequest request = movementQueue.Dequeue();
+            yield return StartCoroutine(Move(request.Direction, request.Distance, request.Speed));
+        }
+
+        isMoving = false;
+    }
+
+    private IEnumerator Move(Vector3 direction, int distance, float speed)
     {
         if (!IsValidDirection(direction))
         {
-            return;
+            yield break;
         }
 
         Vector3 targetPosition = CalculateTargetPosition(direction, distance);
-        bool colided = false;
+        bool collided = false;
 
         int simulatedDistance = 1;
         while (simulatedDistance <= distance)
         {
             Block block = Block.FindBlockAtCoordinate(coordinates + direction * simulatedDistance);
-            Debug.Log($"Block at {coordinates + direction * simulatedDistance}, block exists: {block != null}");
-            Debug.Log($"Block type: {block?.blockType}");
             if (block != null && block.blockType == BlockType.STATIC)
             {
-                Debug.Log($"Blocked by static block at {coordinates + direction * simulatedDistance}");
                 targetPosition = CalculateTargetPosition(direction, simulatedDistance - 1);
-                colided = true;
+                collided = true;
+
+                break;
             }
 
             simulatedDistance++;
         }
 
-        StartCoroutine(MoveToPosition(targetPosition, speed, colided));
+        yield return StartCoroutine(MoveToPosition(targetPosition, speed, collided));
     }
 
     private bool IsValidDirection(Vector3 direction)
@@ -65,7 +92,7 @@ public class Player : MonoBehaviour
 
     private Vector3 CalculateTargetPosition(Vector3 direction, int distance)
     {
-        Vector3 targetPosition = coordinates;
+        Vector3 targetPosition = transform.position;
 
         if (direction == Vector3.up || direction == Vector3.down)
         {
@@ -76,9 +103,9 @@ public class Player : MonoBehaviour
             targetPosition += direction * distance * Block.distanceBetweenBlocks2d;
         }
 
+        Debug.Log($"Target coordinates: {targetPosition}");
         return targetPosition;
     }
-
 
     private IEnumerator MoveToPosition(Vector3 targetPosition, float speed, bool collided = false)
     {
@@ -89,11 +116,9 @@ public class Player : MonoBehaviour
         while (elapsedTime < journeyTime)
         {
             elapsedTime += Time.fixedDeltaTime;
-            float fractionOfJourney = elapsedTime / journeyTime;
-
-            float easedFraction = fractionOfJourney * fractionOfJourney * (3f - 2f * fractionOfJourney);
-
-            transform.position = Vector3.Lerp(startPosition, targetPosition, easedFraction);
+            float progress = elapsedTime / journeyTime;
+            progress = Mathf.SmoothStep(0, 1, progress);
+            transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
             yield return null;
         }
 
@@ -102,35 +127,49 @@ public class Player : MonoBehaviour
 
         if (collided)
         {
-            Vector3 bounceForwardPosition = targetPosition + ((targetPosition - startPosition).normalized * Block.distanceBetweenBlocks2d * 0.25f);
-            Vector3 bounceBackPosition = targetPosition;
-            elapsedTime = 0f;
+            movementQueue.Clear();
 
-            // Bounce forward
+            Vector3 direction = (targetPosition - startPosition).normalized;
+            journeyTime = 1f;
+            elapsedTime = 0f;
+            Vector3 forwardPosition = targetPosition + direction * 0.25f;
+
             while (elapsedTime < journeyTime)
             {
                 elapsedTime += Time.fixedDeltaTime;
-                float fractionOfJourney = elapsedTime / journeyTime;
-
-                float easedFraction = fractionOfJourney * fractionOfJourney * (3f - 2f * fractionOfJourney);
-
-                transform.position = Vector3.Lerp(targetPosition, bounceForwardPosition, easedFraction);
+                float progress = elapsedTime / journeyTime;
+                progress = Mathf.SmoothStep(0, 1, progress);
+                transform.position = Vector3.Lerp(targetPosition, forwardPosition, progress);
                 yield return null;
             }
+            transform.position = forwardPosition;
 
+            journeyTime = 1f;
             elapsedTime = 0f;
-
-            // Bounce back
             while (elapsedTime < journeyTime)
             {
                 elapsedTime += Time.fixedDeltaTime;
-                float fractionOfJourney = elapsedTime / journeyTime;
-
-                float easedFraction = fractionOfJourney * fractionOfJourney * (3f - 2f * fractionOfJourney);
-
-                transform.position = Vector3.Lerp(bounceForwardPosition, bounceBackPosition, easedFraction);
+                float progress = elapsedTime / journeyTime;
+                progress = Mathf.SmoothStep(0, 1, progress);
+                transform.position = Vector3.Lerp(forwardPosition, targetPosition, progress);
                 yield return null;
             }
+            transform.position = targetPosition;
+            UpdateCoordinates();
+        }
+    }
+
+    private class MovementRequest
+    {
+        public Vector3 Direction { get; }
+        public int Distance { get; }
+        public float Speed { get; }
+
+        public MovementRequest(Vector3 direction, int distance, float speed)
+        {
+            Direction = direction;
+            Distance = distance;
+            Speed = speed;
         }
     }
 }

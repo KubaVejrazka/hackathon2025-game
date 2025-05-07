@@ -9,7 +9,8 @@ public enum BlockType
 
 public class Block : MonoBehaviour
 {
-    public static readonly float distanceBetweenBlocks = 1 + 0.1f; // block size + gap size
+    public static readonly float distanceBetweenBlocks2d = 1 + 0.1f; // block size + gap size
+    public static readonly float distanceBetweenBlocksY = 1;
 
     [SerializeField]
     public BlockType blockType;
@@ -18,9 +19,9 @@ public class Block : MonoBehaviour
     void Awake()
     {
         coordinates = new Vector3(
-            Mathf.Round(transform.localPosition.x / distanceBetweenBlocks),
-            Mathf.Round(transform.localPosition.y / distanceBetweenBlocks),
-            Mathf.Round(transform.localPosition.z / distanceBetweenBlocks)
+            Mathf.Round(transform.localPosition.x / distanceBetweenBlocks2d),
+            Mathf.Round(transform.localPosition.y / distanceBetweenBlocksY),
+            Mathf.Round(transform.localPosition.z / distanceBetweenBlocks2d)
         );
     }
 
@@ -53,16 +54,14 @@ public class Block : MonoBehaviour
 
     public static Block FindBlockAtCoordinate(Vector3 coordinate)
     {
-        Collider[] colliders = Physics.OverlapSphere(coordinate, 0.1f);
-        foreach (var collider in colliders)
+        List<Block> blocks = new List<Block>(FindObjectsByType<Block>(FindObjectsSortMode.None));
+        foreach (Block block in blocks)
         {
-            Block block = collider.GetComponent<Block>();
-            if (block != null && block.coordinates == coordinate)
+            if (block.coordinates == coordinate)
             {
                 return block;
             }
         }
-
         return null;
     }
 

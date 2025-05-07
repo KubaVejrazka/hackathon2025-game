@@ -35,7 +35,7 @@ public class Player : MonoBehaviour
 
     public void EnqueueMove(Vector3 direction, int distance, float speed)
     {
-        movementQueue.Enqueue(new MovementRequest(direction, distance, speed * 0.5f));
+        movementQueue.Enqueue(new MovementRequest(direction, distance, speed));
         if (!isMoving)
         {
             StartCoroutine(ProcessMovementQueue());
@@ -80,7 +80,7 @@ public class Player : MonoBehaviour
             simulatedDistance++;
         }
 
-        yield return StartCoroutine(MoveToPosition(targetPosition, speed, collided));
+        yield return StartCoroutine(MoveToPosition(targetPosition, speed * 1.5f, collided));
     }
 
     private bool IsValidDirection(Vector3 direction)
@@ -115,7 +115,7 @@ public class Player : MonoBehaviour
 
         while (elapsedTime < journeyTime)
         {
-            elapsedTime += Time.fixedDeltaTime;
+            elapsedTime += Time.deltaTime;
             float progress = elapsedTime / journeyTime;
             progress = Mathf.SmoothStep(0, 1, progress);
             transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
@@ -130,13 +130,13 @@ public class Player : MonoBehaviour
             movementQueue.Clear();
 
             Vector3 direction = (targetPosition - startPosition).normalized;
-            journeyTime = 1f;
+            journeyTime = 0.25f;
             elapsedTime = 0f;
             Vector3 forwardPosition = targetPosition + direction * 0.25f;
 
             while (elapsedTime < journeyTime)
             {
-                elapsedTime += Time.fixedDeltaTime;
+                elapsedTime += Time.deltaTime;
                 float progress = elapsedTime / journeyTime;
                 progress = Mathf.SmoothStep(0, 1, progress);
                 transform.position = Vector3.Lerp(targetPosition, forwardPosition, progress);
@@ -144,11 +144,11 @@ public class Player : MonoBehaviour
             }
             transform.position = forwardPosition;
 
-            journeyTime = 1f;
+            journeyTime = 0.25f;
             elapsedTime = 0f;
             while (elapsedTime < journeyTime)
             {
-                elapsedTime += Time.fixedDeltaTime;
+                elapsedTime += Time.deltaTime;
                 float progress = elapsedTime / journeyTime;
                 progress = Mathf.SmoothStep(0, 1, progress);
                 transform.position = Vector3.Lerp(forwardPosition, targetPosition, progress);

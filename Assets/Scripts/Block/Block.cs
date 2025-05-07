@@ -10,7 +10,8 @@ public class Block : MonoBehaviour
 {
     private float distanceBetweenBlocks = 1 + 0.1f; // block size + gap size
 
-    public BlockType blockType { get; private set; }
+    [SerializeField]
+    public BlockType blockType;
     public Vector3 coordinates { get; private set; }
 
     void Awake()

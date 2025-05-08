@@ -37,6 +37,7 @@ jobs:
             - name: Git LFS Pull
               run: |
                   git lfs pull
+                  git reset --hard HEAD
 
             - uses: actions/cache@v3
               with:

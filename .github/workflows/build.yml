@@ -54,7 +54,7 @@ jobs:
                   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
               with:
                   targetPlatform: WebGL
-                  buildsPath: Build
+                  buildsPath: Build/WebGL
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3
@@ -78,7 +78,7 @@ jobs:
               id: build-and-push
               uses: docker/build-push-action@v6
               with:
-                  context: .
+                  context: Build/WebGL
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}

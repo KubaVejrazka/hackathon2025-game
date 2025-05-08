@@ -83,7 +83,7 @@ jobs:
                             tags: ${{ steps.meta.outputs.tags }}
                             labels: ${{ steps.meta.outputs.labels }}
                             cache-from: type=gha,value=latest
-                            cache-to: type=gha,mode=max
+                            cache-to: type=gha,value=latest,mode=max
 
             - name: Notify watchtower
               run: |

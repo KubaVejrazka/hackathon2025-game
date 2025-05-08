@@ -74,16 +74,16 @@ jobs:
                   tags: |
                       type=raw,value=latest
 
-                      - name: Build and push Docker image
-                        id: build-and-push
-                        uses: docker/build-push-action@v6
-                        with:
-                            context: .
-                            push: true
-                            tags: ${{ steps.meta.outputs.tags }}
-                            labels: ${{ steps.meta.outputs.labels }}
-                            cache-from: type=gha,value=latest
-                            cache-to: type=gha,value=latest,mode=max
+            - name: Build and push Docker image
+              id: build-and-push
+              uses: docker/build-push-action@v6
+              with:
+                  context: .
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  cache-from: type=gha,value=latest
+                  cache-to: type=gha,value=latest,mode=max
 
             - name: Notify watchtower
               run: |

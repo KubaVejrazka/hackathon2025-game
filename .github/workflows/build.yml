@@ -54,7 +54,7 @@ jobs:
                   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
               with:
                   targetPlatform: WebGL
-                  buildsPath: Build/WebGL
+                  buildsPath: Build
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3

@@ -37,8 +37,6 @@ jobs:
             - name: Git LFS Pull
               run: |
                   git lfs pull
-                  git add .
-                  git reset --hard
 
             - uses: actions/cache@v3
               with:
@@ -76,15 +74,15 @@ jobs:
                       type=raw,value=latest
 
                       - name: Build and push Docker image
-                      id: build-and-push
-                      uses: docker/build-push-action@v6
-                      with:
-                          context: .
-                          push: true
-                          tags: ${{ steps.meta.outputs.tags }}
-                          labels: ${{ steps.meta.outputs.labels }}
-                          cache-from: type=gha
-                          cache-to: type=gha,mode=max
+                        id: build-and-push
+                        uses: docker/build-push-action@v6
+                        with:
+                            context: .
+                            push: true
+                            tags: ${{ steps.meta.outputs.tags }}
+                            labels: ${{ steps.meta.outputs.labels }}
+                            cache-from: type=gha,value=latest
+                            cache-to: type=gha,mode=max
 
             - name: Notify watchtower
               run: |

@@ -74,6 +74,9 @@ jobs:
                   tags: |
                       type=raw,value=latest
 
+            - name: (DEBUG) print unity output folder contents
+              run: ls -la Build && ls -la Build/WebGL
+
             - name: Build and push Docker image
               id: build-and-push
               uses: docker/build-push-action@v6

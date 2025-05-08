@@ -1,0 +1,47 @@
+# Unity build artifacts
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+Logs/
+MemoryCaptures/
+
+# IDE and system files
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.user
+*.pidb
+*.suo
+*.unityproj
+
+# Unity metadata and cache
+*.userprefs
+*.booproj
+
+# OS-specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Node/npm if used (e.g. for WebGL templates)
+node_modules/
+npm-debug.log
+yarn.lock
+pnpm-lock.yaml
+
+# Others
+*.log
+*.bak
+*.swp

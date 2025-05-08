@@ -1,0 +1,91 @@
+name: Build and upload WebGL artifact
+on:
+    push:
+        branches:
+            - main
+        paths-ignore:
+            - "*.md"
+            - "docs/**"
+            - ".vscode/**"
+            - "LICENSE"
+            - ".editorconfig"
+            - "git-hooks/**"
+
+    workflow_dispatch:
+
+env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+
+            - name: Create LFS file list
+              run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+            - name: Restore LFS cache
+              uses: actions/cache@v3
+              id: lfs-cache
+              with:
+                  path: .git/lfs
+                  key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+            - name: Git LFS Pull
+              run: |
+                  git lfs pull
+                  git add .
+                  git reset --hard
+
+            - uses: actions/cache@v3
+              with:
+                  path: Library
+                  key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+                  restore-keys: |
+                      Library-
+
+            - name: Build Unity project
+              uses: game-ci/unity-builder@v4
+              env:
+                  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+                  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+                  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+              with:
+                  targetPlatform: WebGL
+                  buildsPath: Build
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Log into registry ${{ env.REGISTRY }}
+              uses: docker/login-action@v3
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Extract Docker metadata
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  tags: |
+                      type=raw,value=latest
+
+                      - name: Build and push Docker image
+                      id: build-and-push
+                      uses: docker/build-push-action@v6
+                      with:
+                          context: .
+                          push: true
+                          tags: ${{ steps.meta.outputs.tags }}
+                          labels: ${{ steps.meta.outputs.labels }}
+                          cache-from: type=gha
+                          cache-to: type=gha,mode=max
+
+            - name: Notify watchtower
+              run: |
+                  curl -H "Authorization: Bearer ${{ secrets.WATCHTOWER_HTTP_API_TOKEN }}" https://watchtower.kristn.co.uk/v1/update

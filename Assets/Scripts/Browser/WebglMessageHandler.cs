@@ -50,6 +50,21 @@ public class WebGLMessageHandler : MonoBehaviour
             Time.timeScale = 0;
             return;
         }
+
+        OutBrowserMessage message = new() { action = "ready", args = null };
+        string jsonMessage = JsonUtility.ToJson(message);
+        SendToJavaScript(message);
+
+        SendToJavaScript(new OutBrowserMessage
+        {
+            action = "setData",
+            args = new Dictionary<string, object>
+            {
+            { "variableName", "test" },
+            { "variableValue", 42 },
+            { "variableType", "int" }
+            }
+        });
     }
 
     public void _ReceiveFromJavaScript(string jsonMessage)
@@ -84,7 +99,7 @@ public class WebGLMessageHandler : MonoBehaviour
 
     public static void ReceiveFromJavaScript(InBrowserMessage message)
     {
-        //Debug.Log("UNITY - Received message from JavaScript: " + message.action);
+        Debug.Log("UNITY - Received message from JavaScript: " + message.action);
 
         switch (message.action)
         {
@@ -103,61 +118,17 @@ public class WebGLMessageHandler : MonoBehaviour
                     speed = float.Parse(message.args["speed"].ToString());
                 }
 
-                if (player != null) player.EnqueueMove(Vector3.forward, distance, speed);
+                if (player != null) player.EnqueueAction(new MovementAction(distance, speed));
                 break;
 
-            case "back":
+            case "turnLeft":
                 player = Object.FindFirstObjectByType<Player>();
-
-                distance = 1;
-                if (message.args["distance"] != null)
-                {
-                    distance = int.Parse(message.args["distance"].ToString());
-                }
-
-                speed = 1f;
-                if (message.args["speed"] != null)
-                {
-                    speed = float.Parse(message.args["speed"].ToString());
-                }
-
-                if (player != null) player.EnqueueMove(Vector3.back, distance, speed);
+                if (player != null) player.EnqueueAction(new RotationAction("left"));
                 break;
 
-            case "left":
+            case "turnRight":
                 player = Object.FindFirstObjectByType<Player>();
-
-                distance = 1;
-                if (message.args["distance"] != null)
-                {
-                    distance = int.Parse(message.args["distance"].ToString());
-                }
-
-                speed = 1f;
-                if (message.args["speed"] != null)
-                {
-                    speed = float.Parse(message.args["speed"].ToString());
-                }
-
-                if (player != null) player.EnqueueMove(Vector3.left, distance, speed);
-                break;
-
-            case "right":
-                player = Object.FindFirstObjectByType<Player>();
-
-                distance = 1;
-                if (message.args["distance"] != null)
-                {
-                    distance = int.Parse(message.args["distance"].ToString());
-                }
-
-                speed = 1f;
-                if (message.args["speed"] != null)
-                {
-                    speed = float.Parse(message.args["speed"].ToString());
-                }
-
-                if (player != null) player.EnqueueMove(Vector3.right, distance, speed);
+                if (player != null) player.EnqueueAction(new RotationAction("right"));
                 break;
 
             default:

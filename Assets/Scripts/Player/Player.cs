@@ -6,22 +6,19 @@ public class Player : MonoBehaviour
 {
     public Vector3 coordinates { get; private set; }
 
-    private Queue<MovementRequest> movementQueue = new Queue<MovementRequest>();
-    private bool isMoving = false;
+    private Queue<PlayerAction> actionQueue = new Queue<PlayerAction>();
+    private bool actionInProgress = false;
 
     void Awake()
     {
         UpdateCoordinates();
-        Debug.Log($"Player coordinates: {coordinates}");
     }
 
     void Start()
     {
-        //EnqueueMove(Vector3.right, 2, 1f);
-        //EnqueueMove(Vector3.back, 2, 1f);
-        //EnqueueMove(Vector3.left, 2, 1f);
-        //EnqueueMove(Vector3.forward, 4, 1f);
-        //EnqueueMove(Vector3.left, 2, 1f);
+        //EnqueueAction(new MovementAction(1, 1));
+        //EnqueueAction(new RotationAction("right"));
+        //EnqueueAction(new MovementAction(4, 1));
     }
 
     private void UpdateCoordinates()
@@ -33,29 +30,29 @@ public class Player : MonoBehaviour
         );
     }
 
-    public void EnqueueMove(Vector3 direction, int distance, float speed)
+    public void EnqueueAction(PlayerAction action)
     {
-        movementQueue.Enqueue(new MovementRequest(direction, distance, speed));
-        if (!isMoving)
+        actionQueue.Enqueue(action);
+        if (!actionInProgress)
         {
-            StartCoroutine(ProcessMovementQueue());
+            StartCoroutine(ProcessActionQueue());
         }
     }
 
-    private IEnumerator ProcessMovementQueue()
+    private IEnumerator ProcessActionQueue()
     {
-        isMoving = true;
+        actionInProgress = true;
 
-        while (movementQueue.Count > 0)
+        while (actionQueue.Count > 0)
         {
-            MovementRequest request = movementQueue.Dequeue();
-            yield return StartCoroutine(Move(request.Direction, request.Distance, request.Speed));
+            PlayerAction action = actionQueue.Dequeue();
+            yield return action.Execute(this);
         }
 
-        isMoving = false;
+        actionInProgress = false;
     }
 
-    private IEnumerator Move(Vector3 direction, int distance, float speed)
+    public IEnumerator Move(Vector3 direction, int distance, float speed)
     {
         if (!IsValidDirection(direction))
         {
@@ -63,16 +60,31 @@ public class Player : MonoBehaviour
         }
 
         Vector3 targetPosition = CalculateTargetPosition(direction, distance);
-        bool collided = false;
+        bool interrupted = false;
 
-        int simulatedDistance = 1;
+        int simulatedDistance = 0;
         while (simulatedDistance <= distance)
         {
-            Block block = Block.FindBlockAtCoordinate(coordinates + direction * simulatedDistance);
+            Vector3 currentPosition = coordinates + direction * simulatedDistance;
+
+            // Check if there is a block under the player
+            Block blockBelow = Block.FindBlockAtCoordinate(currentPosition + Vector3.down);
+            if (blockBelow == null)
+            {
+                Debug.Log($"No block below at position: {currentPosition}");
+                targetPosition = CalculateTargetPosition(direction, simulatedDistance - 1);
+                interrupted = true;
+
+                break;
+            }
+
+            // Check for collision in the direction
+            Block block = Block.FindBlockAtCoordinate(currentPosition);
             if (block != null && block.blockType == BlockType.STATIC)
             {
+                Debug.Log($"Collision detected at distance: {simulatedDistance}");
                 targetPosition = CalculateTargetPosition(direction, simulatedDistance - 1);
-                collided = true;
+                interrupted = true;
 
                 break;
             }
@@ -80,7 +92,32 @@ public class Player : MonoBehaviour
             simulatedDistance++;
         }
 
-        yield return StartCoroutine(MoveToPosition(targetPosition, speed * 1.5f, collided));
+        yield return StartCoroutine(MoveToPosition(targetPosition, direction, speed * 1.5f, interrupted));
+    }
+
+    public IEnumerator Rotate(Vector3 rotation, float speed)
+    {
+        Quaternion startRotation = transform.rotation;
+        Quaternion targetRotation = Quaternion.Euler(transform.eulerAngles + rotation);
+        float elapsedTime = 0f;
+        float journeyTime = Quaternion.Angle(startRotation, targetRotation) / (speed * 100);
+
+        while (elapsedTime < journeyTime)
+        {
+            elapsedTime += Time.deltaTime;
+            float progress = elapsedTime / journeyTime;
+            progress = Mathf.SmoothStep(0, 1, progress); // Ease-in and ease-out
+            transform.rotation = Quaternion.Slerp(startRotation, targetRotation, progress);
+            yield return null;
+        }
+
+        transform.rotation = targetRotation;
+    }
+
+    public IEnumerator Interact(string interactionType)
+    {
+        Debug.Log($"Performing interaction: {interactionType}");
+        yield return new WaitForSeconds(1f); // Simulate interaction delay
     }
 
     private bool IsValidDirection(Vector3 direction)
@@ -103,11 +140,10 @@ public class Player : MonoBehaviour
             targetPosition += direction * distance * Block.distanceBetweenBlocks2d;
         }
 
-        Debug.Log($"Target coordinates: {targetPosition}");
         return targetPosition;
     }
 
-    private IEnumerator MoveToPosition(Vector3 targetPosition, float speed, bool collided = false)
+    private IEnumerator MoveToPosition(Vector3 targetPosition, Vector3 direction, float speed, bool interrupted = false)
     {
         Vector3 startPosition = transform.position;
         float journeyTime = Vector3.Distance(startPosition, targetPosition) / speed;
@@ -125,11 +161,10 @@ public class Player : MonoBehaviour
         transform.position = targetPosition;
         UpdateCoordinates();
 
-        if (collided)
+        if (interrupted)
         {
-            movementQueue.Clear();
+            actionQueue.Clear();
 
-            Vector3 direction = (targetPosition - startPosition).normalized;
             journeyTime = 0.25f;
             elapsedTime = 0f;
             Vector3 forwardPosition = targetPosition + direction * 0.25f;
@@ -158,18 +193,69 @@ public class Player : MonoBehaviour
             UpdateCoordinates();
         }
     }
+}
 
-    private class MovementRequest
+public abstract class PlayerAction
+{
+    public abstract IEnumerator Execute(Player player);
+}
+
+public class MovementAction : PlayerAction
+{
+    private int distance;
+    private float speed;
+
+    public MovementAction(int distance, float speed)
     {
-        public Vector3 Direction { get; }
-        public int Distance { get; }
-        public float Speed { get; }
+        this.distance = distance;
+        this.speed = speed;
+    }
 
-        public MovementRequest(Vector3 direction, int distance, float speed)
-        {
-            Direction = direction;
-            Distance = distance;
-            Speed = speed;
-        }
+    public override IEnumerator Execute(Player player)
+    {
+        // set direction to players current orientation
+        Vector3 direction = player.transform.forward;
+        yield return player.Move(direction, distance, speed);
     }
 }
+
+public class RotationAction : PlayerAction
+{
+    private Vector3 rotation;
+
+    public RotationAction(string direction)
+    {
+        if (direction.ToLower() == "right")
+        {
+            this.rotation = new Vector3(0, 90, 0);
+        }
+        else if (direction.ToLower() == "left")
+        {
+            this.rotation = new Vector3(0, -90, 0);
+        }
+        else
+        {
+            Debug.LogError($"Invalid rotation direction: {direction}");
+        }
+    }
+
+    public override IEnumerator Execute(Player player)
+    {
+        yield return player.Rotate(rotation, 2);
+    }
+}
+
+//public class InteractionAction : PlayerAction
+//{
+//    private string interactionType;
+
+//    public InteractionAction(string interactionType)
+//    {
+//        this.interactionType = interactionType;
+//    }
+
+//    public override IEnumerator Execute(Player player)
+//    {
+//        yield return player.Interact(interactionType);
+//    }
+//}

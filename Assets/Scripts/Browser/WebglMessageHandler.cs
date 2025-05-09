@@ -121,12 +121,12 @@ public class WebGLMessageHandler : MonoBehaviour
                 if (player != null) player.EnqueueAction(new MovementAction(distance, speed));
                 break;
 
-            case "turnLeft":
+            case "turn_left":
                 player = Object.FindFirstObjectByType<Player>();
                 if (player != null) player.EnqueueAction(new RotationAction("left"));
                 break;
 
-            case "turnRight":
+            case "turn_right":
                 player = Object.FindFirstObjectByType<Player>();
                 if (player != null) player.EnqueueAction(new RotationAction("right"));
                 break;

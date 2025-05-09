@@ -17,11 +17,11 @@ public class Player : MonoBehaviour
 
     void Start()
     {
-        EnqueueMove(Vector3.right, 2, 1f);
-        EnqueueMove(Vector3.back, 2, 1f);
-        EnqueueMove(Vector3.left, 2, 1f);
-        EnqueueMove(Vector3.forward, 4, 1f);
-        EnqueueMove(Vector3.left, 2, 1f);
+        //EnqueueMove(Vector3.right, 2, 1f);
+        //EnqueueMove(Vector3.back, 2, 1f);
+        //EnqueueMove(Vector3.left, 2, 1f);
+        //EnqueueMove(Vector3.forward, 4, 1f);
+        //EnqueueMove(Vector3.left, 2, 1f);
     }
 
     private void UpdateCoordinates()

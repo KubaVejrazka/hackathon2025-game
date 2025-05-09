@@ -31,6 +31,8 @@ public class WebGLMessageHandler : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("WebGLMessageHandler started");
+
         if (instance == null)
         {
             instance = this;
@@ -47,15 +49,6 @@ public class WebGLMessageHandler : MonoBehaviour
             Debug.LogError("Failed to initialize message listener, game is not running in a browser, terminating");
             Time.timeScale = 0;
             return;
-        }
-
-        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower() == "mainmenu")
-        {
-            OutBrowserMessage message = new() { action = "ready", args = null };
-
-            string jsonMessage = JsonUtility.ToJson(message);
-            Debug.Log("UNITY - Sending message to JavaScript: " + jsonMessage);
-            SendToJavaScript(message);
         }
     }
 
@@ -91,11 +84,83 @@ public class WebGLMessageHandler : MonoBehaviour
 
     public static void ReceiveFromJavaScript(InBrowserMessage message)
     {
-        Debug.Log("UNITY - Received message from JavaScript: " + message.action);
+        //Debug.Log("UNITY - Received message from JavaScript: " + message.action);
 
         switch (message.action)
         {
-            case "test":
+            case "forward":
+                Player player = Object.FindFirstObjectByType<Player>();
+
+                int distance = 1;
+                if (message.args["distance"] != null)
+                {
+                    distance = int.Parse(message.args["distance"].ToString());
+                }
+                
+                float speed = 1f;
+                if (message.args["speed"] != null)
+                {
+                    speed = float.Parse(message.args["speed"].ToString());
+                }
+
+                if (player != null) player.EnqueueMove(Vector3.forward, distance, speed);
+                break;
+
+            case "back":
+                player = Object.FindFirstObjectByType<Player>();
+
+                distance = 1;
+                if (message.args["distance"] != null)
+                {
+                    distance = int.Parse(message.args["distance"].ToString());
+                }
+
+                speed = 1f;
+                if (message.args["speed"] != null)
+                {
+                    speed = float.Parse(message.args["speed"].ToString());
+                }
+
+                if (player != null) player.EnqueueMove(Vector3.back, distance, speed);
+                break;
+
+            case "left":
+                player = Object.FindFirstObjectByType<Player>();
+
+                distance = 1;
+                if (message.args["distance"] != null)
+                {
+                    distance = int.Parse(message.args["distance"].ToString());
+                }
+
+                speed = 1f;
+                if (message.args["speed"] != null)
+                {
+                    speed = float.Parse(message.args["speed"].ToString());
+                }
+
+                if (player != null) player.EnqueueMove(Vector3.left, distance, speed);
+                break;
+
+            case "right":
+                player = Object.FindFirstObjectByType<Player>();
+
+                distance = 1;
+                if (message.args["distance"] != null)
+                {
+                    distance = int.Parse(message.args["distance"].ToString());
+                }
+
+                speed = 1f;
+                if (message.args["speed"] != null)
+                {
+                    speed = float.Parse(message.args["speed"].ToString());
+                }
+
+                if (player != null) player.EnqueueMove(Vector3.right, distance, speed);
+                break;
+
+            default:
                 Debug.Log("UNITY - Received test message from JavaScript: " + message.args["test"]);
                 break;
         }

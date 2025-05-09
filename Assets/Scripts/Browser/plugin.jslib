@@ -15,6 +15,7 @@ mergeInto(LibraryManager.library, {
 		}
 	},
 	InitMessageListener: function () {
+		console.log('initializing message listener');
 		if (typeof window !== "undefined") {
 			window.addEventListener("message", function (event) {
 				if (event.data.type !== "jsToUnity") return;
@@ -27,20 +28,6 @@ mergeInto(LibraryManager.library, {
 				}
 			});
 		}
-
-		/* Domain check (neni moc potreba)
-		try {
-			isIframe = window.self !== window.top || window.location.hostname === "localhost";
-			if (!isIframe) {
-				window.location.href = "https://td.kristn.co.uk/";
-				return false;
-			}
-
-			return true;
-		} catch (e) {
-			window.location.href = "https://td.kristn.co.uk/";
-			return false;
-		}
-        */
+		return true;
 	},
 });

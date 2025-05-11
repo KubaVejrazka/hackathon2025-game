@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class WebGLMessageHandler : MonoBehaviour
 {
@@ -43,6 +44,7 @@ public class WebGLMessageHandler : MonoBehaviour
             Destroy(gameObject);
         }
 
+#if !UNITY_EDITOR
         bool initRes = InitMessageListener();
         if (!initRes)
         {
@@ -65,6 +67,7 @@ public class WebGLMessageHandler : MonoBehaviour
             { "variableType", "int" }
             }
         });
+#endif
     }
 
     public void _ReceiveFromJavaScript(string jsonMessage)
@@ -107,15 +110,26 @@ public class WebGLMessageHandler : MonoBehaviour
                 Player player = Object.FindFirstObjectByType<Player>();
 
                 int distance = 1;
-                if (message.args["distance"] != null)
+                try
                 {
                     distance = int.Parse(message.args["distance"].ToString());
                 }
-                
-                float speed = 1f;
-                if (message.args["speed"] != null)
+                catch (KeyNotFoundException e)
                 {
-                    speed = float.Parse(message.args["speed"].ToString());
+                    Debug.LogError("Failed to parse distance: " + e.Message);
+                }
+
+                float speed = 1f;
+                try
+                {
+                    if (message.args["speed"] != null)
+                    {
+                        speed = float.Parse(message.args["speed"].ToString());
+                    }
+                }
+                catch (KeyNotFoundException e)
+                {
+                    Debug.LogError("Failed to parse speed: " + e.Message);
                 }
 
                 if (player != null) player.EnqueueAction(new MovementAction(distance, speed));
@@ -129,6 +143,20 @@ public class WebGLMessageHandler : MonoBehaviour
             case "turn_right":
                 player = Object.FindFirstObjectByType<Player>();
                 if (player != null) player.EnqueueAction(new RotationAction("right"));
+                break;
+
+            case "setLevel":
+                int level = -1;
+                try
+                {
+                    level = int.Parse(message.args["levelId"].ToString());
+                }
+                catch (KeyNotFoundException e)
+                {
+                    Debug.LogError("Failed to parse level: " + e.Message);
+                }
+
+                SceneManager.LoadScene(level);
                 break;
 
             default:

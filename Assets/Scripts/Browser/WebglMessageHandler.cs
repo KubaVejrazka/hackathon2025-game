@@ -156,11 +156,15 @@ public class WebGLMessageHandler : MonoBehaviour
                     Debug.LogError("Failed to parse level: " + e.Message);
                 }
 
-                SceneManager.LoadScene(level);
+                SceneManager.LoadScene(level.ToString());
+                break;
+
+            case "restartLevel":
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 break;
 
             default:
-                Debug.Log("UNITY - Received test message from JavaScript: " + message.args["test"]);
+                Debug.LogError("Unknown action: " + message.action);
                 break;
         }
     }

@@ -11,6 +11,7 @@ public class Player : MonoBehaviour
     public AudioClip moveSound;
     public AudioClip turnSound;
     public AudioClip levitateSound;
+    public AudioClip interactSound;
 
     private Queue<PlayerAction> actionQueue = new Queue<PlayerAction>();
     private bool actionInProgress = false;
@@ -133,6 +134,15 @@ public class Player : MonoBehaviour
         audioSource.Stop();
     }
 
+    public IEnumerator PlayInteractSound()
+    {
+        audioSource.clip = interactSound;
+        audioSource.loop = false;
+        audioSource.Play();
+
+        yield return new WaitForSeconds(audioSource.clip.length);
+    }
+
     public IEnumerator Interact()
     {
         Block blockInFront = Block.FindBlockAtCoordinate(coordinates + transform.forward);
@@ -146,6 +156,7 @@ public class Player : MonoBehaviour
 
         else if (blockInFront.blockType == BlockType.INTERACTABLE)
         {
+            yield return StartCoroutine(PlayInteractSound());
             Debug.Log($"Performing interaction on block at {coordinates + transform.forward}");
 
             yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
@@ -155,6 +166,7 @@ public class Player : MonoBehaviour
 
         else if (blockInFront.blockType == BlockType.FINISH)
         {
+            yield return StartCoroutine(PlayInteractSound());
             Debug.Log($"Performing interaction on finish at {coordinates + transform.forward}");
 
             float journeyTime = 0.5f;

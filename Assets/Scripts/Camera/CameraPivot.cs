@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 public class Camera : MonoBehaviour
 {
-    [SerializeField] private float rotationSpeed = 100f; // Speed of rotation
+    [SerializeField] private float rotationSpeed = 75f; // Speed of rotation
     [SerializeField] private float damping = 5f; // Damping factor for momentum
     private PlayerInput playerInput;
     private InputAction lookAction;

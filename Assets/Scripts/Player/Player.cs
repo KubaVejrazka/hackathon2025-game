@@ -16,9 +16,8 @@ public class Player : MonoBehaviour
 
     void Start()
     {
-        //EnqueueAction(new MovementAction(1, 1));
-        //EnqueueAction(new RotationAction("right"));
-        //EnqueueAction(new MovementAction(4, 1));
+        EnqueueAction(new RotationAction("right"));
+        EnqueueAction(new MovementAction(4, 1));    
     }
 
     private void UpdateCoordinates()
@@ -68,7 +67,7 @@ public class Player : MonoBehaviour
             Vector3 currentPosition = coordinates + direction * simulatedDistance;
 
             // Check if there is a block under the player
-            Block blockBelow = Block.FindBlockAtCoordinate(currentPosition + Vector3.down);
+            Block blockBelow = Block.FindBlockAtCoordinate(currentPosition + new Vector3(0, -Block.distanceBetweenBlocksY, 0));
             if (blockBelow == null)
             {
                 Debug.Log($"No block below at position: {currentPosition}");
@@ -114,11 +113,11 @@ public class Player : MonoBehaviour
         transform.rotation = targetRotation;
     }
 
-    public IEnumerator Interact(string interactionType)
-    {
-        Debug.Log($"Performing interaction: {interactionType}");
-        yield return new WaitForSeconds(1f); // Simulate interaction delay
-    }
+    //public IEnumerator Interact(string interactionType)
+    //{
+    //    Debug.Log($"Performing interaction: {interactionType}");
+    //    yield return new WaitForSeconds(1f); // Simulate interaction delay
+    //}
 
     private bool IsValidDirection(Vector3 direction)
     {

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class Player : MonoBehaviour
 {
@@ -16,8 +17,9 @@ public class Player : MonoBehaviour
 
     void Start()
     {
+        EnqueueAction(new MovementAction(3, 1));
         EnqueueAction(new RotationAction("right"));
-        EnqueueAction(new MovementAction(4, 1));    
+        EnqueueAction(new MovementAction(3, 1));
     }
 
     private void UpdateCoordinates()
@@ -60,6 +62,7 @@ public class Player : MonoBehaviour
 
         Vector3 targetPosition = CalculateTargetPosition(direction, distance);
         bool interrupted = false;
+        bool won = false;
 
         int simulatedDistance = 0;
         while (simulatedDistance <= distance)
@@ -87,11 +90,20 @@ public class Player : MonoBehaviour
 
                 break;
             }
+            else if (block != null && block.blockType == BlockType.INTERACTABLE)
+            {
+                Debug.Log($"Interactable block detected at distance: {simulatedDistance}");
+                targetPosition = CalculateTargetPosition(direction, simulatedDistance - 1);
+                won = true;
+                interrupted = false;
 
-            simulatedDistance++;
+                break;
+            }
+
+                simulatedDistance++;
         }
 
-        yield return StartCoroutine(MoveToPosition(targetPosition, direction, speed * 1.5f, interrupted));
+        yield return StartCoroutine(MoveToPosition(targetPosition, direction, speed * 1.5f, interrupted, won));
     }
 
     public IEnumerator Rotate(Vector3 rotation, float speed)
@@ -142,7 +154,7 @@ public class Player : MonoBehaviour
         return targetPosition;
     }
 
-    private IEnumerator MoveToPosition(Vector3 targetPosition, Vector3 direction, float speed, bool interrupted = false)
+    private IEnumerator MoveToPosition(Vector3 targetPosition, Vector3 direction, float speed, bool interrupted = false, bool won = false)
     {
         Vector3 startPosition = transform.position;
         float journeyTime = Vector3.Distance(startPosition, targetPosition) / speed;
@@ -190,6 +202,43 @@ public class Player : MonoBehaviour
             }
             transform.position = targetPosition;
             UpdateCoordinates();
+        }
+
+        else if (won)
+        {
+            //jump
+
+            journeyTime = 0.5f;
+            elapsedTime = 0f;
+            Vector3 jumpPosition = targetPosition + new Vector3(0, 0.5f, 0);
+            while (elapsedTime < journeyTime)
+            {
+                elapsedTime += Time.deltaTime;
+                float progress = elapsedTime / journeyTime;
+                progress = Mathf.SmoothStep(0, 1, progress);
+                transform.position = Vector3.Lerp(targetPosition, jumpPosition, progress);
+                yield return null;
+            }
+            transform.position = jumpPosition;
+
+            journeyTime = 0.5f;
+            elapsedTime = 0f;
+            while (elapsedTime < journeyTime)
+            {
+                elapsedTime += Time.deltaTime;
+                float progress = elapsedTime / journeyTime;
+                progress = Mathf.SmoothStep(0, 1, progress);
+                transform.position = Vector3.Lerp(jumpPosition, targetPosition, progress);
+                yield return null;
+            }
+            transform.position = targetPosition;
+
+            Debug.Log("win");
+            WebGLMessageHandler.SendToJavaScript(new WebGLMessageHandler.OutBrowserMessage
+            {
+                action = "levelPass",
+                args = null
+            });
         }
     }
 }

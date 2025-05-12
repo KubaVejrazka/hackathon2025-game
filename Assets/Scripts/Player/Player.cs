@@ -163,7 +163,7 @@ public class Player : MonoBehaviour
 
         if (interrupted)
         {
-            actionQueue.Clear();
+            //actionQueue.Clear();
 
             journeyTime = 0.25f;
             elapsedTime = 0f;

@@ -9,19 +9,16 @@ public enum BlockType
 
 public class Block : MonoBehaviour
 {
-    public static readonly float distanceBetweenBlocks2d = 1 + 0.1f; // block size + gap size
-    public static readonly float distanceBetweenBlocksY = 1;
-
     [SerializeField]
     public BlockType blockType;
     public Vector3 coordinates { get; private set; }
 
-    void Awake()
+    void Start()
     {
         coordinates = new Vector3(
-            Mathf.Round(transform.localPosition.x / distanceBetweenBlocks2d),
-            Mathf.Round(transform.localPosition.y / distanceBetweenBlocksY),
-            Mathf.Round(transform.localPosition.z / distanceBetweenBlocks2d)
+            Mathf.Round(transform.localPosition.x / GlobalData.instance.distanceBetweenBlocks2d),
+            Mathf.Round(transform.localPosition.y / GlobalData.instance.distanceBetweenBlocksY),
+            Mathf.Round(transform.localPosition.z / GlobalData.instance.distanceBetweenBlocks2d)
         );
     }
 

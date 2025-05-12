@@ -9,24 +9,21 @@ public class Player : MonoBehaviour
     private Queue<PlayerAction> actionQueue = new Queue<PlayerAction>();
     private bool actionInProgress = false;
 
-    void Awake()
-    {
-        UpdateCoordinates();
-    }
-
     void Start()
     {
-        //EnqueueAction(new MovementAction(1, 1));
-        //EnqueueAction(new RotationAction("right"));
+        UpdateCoordinates();
+        Debug.Log($"Player coordinates: {coordinates}");
+        EnqueueAction(new MovementAction(1, 1));
+        EnqueueAction(new RotationAction("right"));
         //EnqueueAction(new MovementAction(4, 1));
     }
 
     private void UpdateCoordinates()
     {
         coordinates = new Vector3(
-            Mathf.Round(transform.localPosition.x / Block.distanceBetweenBlocks2d),
-            Mathf.Round(transform.localPosition.y / Block.distanceBetweenBlocksY),
-            Mathf.Round(transform.localPosition.z / Block.distanceBetweenBlocks2d)
+            Mathf.Round(transform.localPosition.x / GlobalData.instance.distanceBetweenBlocks2d),
+            Mathf.Round(transform.localPosition.y / GlobalData.instance.distanceBetweenBlocksY),
+            Mathf.Round(transform.localPosition.z / GlobalData.instance.distanceBetweenBlocks2d)
         );
     }
 
@@ -133,11 +130,11 @@ public class Player : MonoBehaviour
 
         if (direction == Vector3.up || direction == Vector3.down)
         {
-            targetPosition += direction * distance * Block.distanceBetweenBlocksY;
+            targetPosition += direction * distance * GlobalData.instance.distanceBetweenBlocksY;
         }
         else
         {
-            targetPosition += direction * distance * Block.distanceBetweenBlocks2d;
+            targetPosition += direction * distance * GlobalData.instance.distanceBetweenBlocks2d;
         }
 
         return targetPosition;

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -17,9 +18,11 @@ public class Player : MonoBehaviour
 
     void Start()
     {
-        //EnqueueAction(new MovementAction(3, 1));
+        //EnqueueAction(new MovementAction(4, 1));
+        //EnqueueAction(new InteractionAction());
         //EnqueueAction(new RotationAction("right"));
-        //EnqueueAction(new MovementAction(3, 1));
+        //EnqueueAction(new MovementAction(2, 1));
+        //EnqueueAction(new InteractionAction());
     }
 
     private void UpdateCoordinates()
@@ -70,7 +73,7 @@ public class Player : MonoBehaviour
             Vector3 currentPosition = coordinates + direction * simulatedDistance;
 
             // Check if there is a block under the player
-            Block blockBelow = Block.FindBlockAtCoordinate(currentPosition + new Vector3(0, -Block.distanceBetweenBlocksY, 0));
+            Block blockBelow = Block.FindBlockAtCoordinate(currentPosition + Vector3.down);
             if (blockBelow == null)
             {
                 Debug.Log($"No block below at position: {currentPosition}");
@@ -82,7 +85,8 @@ public class Player : MonoBehaviour
 
             // Check for collision in the direction
             Block block = Block.FindBlockAtCoordinate(currentPosition);
-            if (block != null && block.blockType == BlockType.STATIC)
+            //if (block != null && block.blockType == BlockType.STATIC)
+            if (block != null)
             {
                 Debug.Log($"Collision detected at distance: {simulatedDistance}");
                 targetPosition = CalculateTargetPosition(direction, simulatedDistance - 1);
@@ -90,17 +94,8 @@ public class Player : MonoBehaviour
 
                 break;
             }
-            else if (block != null && block.blockType == BlockType.INTERACTABLE)
-            {
-                Debug.Log($"Interactable block detected at distance: {simulatedDistance}");
-                targetPosition = CalculateTargetPosition(direction, simulatedDistance - 1);
-                won = true;
-                interrupted = false;
 
-                break;
-            }
-
-                simulatedDistance++;
+            simulatedDistance++;
         }
 
         yield return StartCoroutine(MoveToPosition(targetPosition, direction, speed * 1.5f, interrupted, won));
@@ -125,11 +120,72 @@ public class Player : MonoBehaviour
         transform.rotation = targetRotation;
     }
 
-    //public IEnumerator Interact(string interactionType)
-    //{
-    //    Debug.Log($"Performing interaction: {interactionType}");
-    //    yield return new WaitForSeconds(1f); // Simulate interaction delay
-    //}
+    public IEnumerator Interact()
+    {
+        Block blockInFront = Block.FindBlockAtCoordinate(coordinates + transform.forward);
+
+        if (blockInFront == null || blockInFront.blockType == BlockType.STATIC)
+        {
+            yield return StartCoroutine(Rotate(new Vector3(0, -15, 0), 1));
+            yield return StartCoroutine(Rotate(new Vector3(0, 30, 0), 1));
+            yield return StartCoroutine(Rotate(new Vector3(0, -15, 0), 1));
+        }
+
+        else if (blockInFront.blockType == BlockType.INTERACTABLE)
+        {
+            Debug.Log($"Performing interaction on block at {coordinates + transform.forward}");
+
+            yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
+            yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
+            yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
+        }
+
+        else if (blockInFront.blockType == BlockType.FINISH)
+        {
+            Debug.Log($"Performing interaction on finish at {coordinates + transform.forward}");
+
+            float journeyTime = 0.5f;
+            float elapsedTime = 0f;
+            Vector3 targetPosition = transform.position;
+            Vector3 jumpPosition = targetPosition + new Vector3(0, 0.5f, 0);
+            while (elapsedTime < journeyTime)
+            {
+                elapsedTime += Time.deltaTime;
+                float progress = elapsedTime / journeyTime;
+                progress = Mathf.SmoothStep(0, 1, progress);
+                transform.position = Vector3.Lerp(targetPosition, jumpPosition, progress);
+                yield return null;
+            }
+            transform.position = jumpPosition;
+
+            yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
+            yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
+            yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
+
+            journeyTime = 0.5f;
+            elapsedTime = 0f;
+            while (elapsedTime < journeyTime)
+            {
+                elapsedTime += Time.deltaTime;
+                float progress = elapsedTime / journeyTime;
+                progress = Mathf.SmoothStep(0, 1, progress);
+                transform.position = Vector3.Lerp(jumpPosition, targetPosition, progress);
+                yield return null;
+            }
+            transform.position = targetPosition;
+
+            Debug.Log("win");
+            WebGLMessageHandler.SendToJavaScript(new WebGLMessageHandler.OutBrowserMessage
+            {
+                action = "levelPass",
+                args = null
+            });
+        }
+
+        yield return null;
+
+        //yield return new WaitForSeconds(1f); // Simulate interaction delay
+    }
 
     private bool IsValidDirection(Vector3 direction)
     {
@@ -206,39 +262,7 @@ public class Player : MonoBehaviour
 
         else if (won)
         {
-            //jump
-
-            journeyTime = 0.5f;
-            elapsedTime = 0f;
-            Vector3 jumpPosition = targetPosition + new Vector3(0, 0.5f, 0);
-            while (elapsedTime < journeyTime)
-            {
-                elapsedTime += Time.deltaTime;
-                float progress = elapsedTime / journeyTime;
-                progress = Mathf.SmoothStep(0, 1, progress);
-                transform.position = Vector3.Lerp(targetPosition, jumpPosition, progress);
-                yield return null;
-            }
-            transform.position = jumpPosition;
-
-            journeyTime = 0.5f;
-            elapsedTime = 0f;
-            while (elapsedTime < journeyTime)
-            {
-                elapsedTime += Time.deltaTime;
-                float progress = elapsedTime / journeyTime;
-                progress = Mathf.SmoothStep(0, 1, progress);
-                transform.position = Vector3.Lerp(jumpPosition, targetPosition, progress);
-                yield return null;
-            }
-            transform.position = targetPosition;
-
-            Debug.Log("win");
-            WebGLMessageHandler.SendToJavaScript(new WebGLMessageHandler.OutBrowserMessage
-            {
-                action = "levelPass",
-                args = null
-            });
+            
         }
     }
 }
@@ -293,17 +317,10 @@ public class RotationAction : PlayerAction
     }
 }
 
-//public class InteractionAction : PlayerAction
-//{
-//    private string interactionType;
-
-//    public InteractionAction(string interactionType)
-//    {
-//        this.interactionType = interactionType;
-//    }
-
-//    public override IEnumerator Execute(Player player)
-//    {
-//        yield return player.Interact(interactionType);
-//    }
-//}
+public class InteractionAction : PlayerAction
+{
+    public override IEnumerator Execute(Player player)
+    {
+        yield return player.Interact();
+    }
+}

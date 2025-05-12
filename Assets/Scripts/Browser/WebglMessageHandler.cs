@@ -145,6 +145,11 @@ public class WebGLMessageHandler : MonoBehaviour
                 if (player != null) player.EnqueueAction(new RotationAction("right"));
                 break;
 
+            case "interact":
+                player = Object.FindFirstObjectByType<Player>();
+                if (player != null) player.EnqueueAction(new InteractionAction());
+                break;
+
             case "setLevel":
                 int level = -1;
                 try

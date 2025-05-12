@@ -5,6 +5,7 @@ public enum BlockType
 {
     STATIC,
     INTERACTABLE,
+    FINISH
 }
 
 public class Block : MonoBehaviour
@@ -66,14 +67,14 @@ public class Block : MonoBehaviour
     }
 
 
-    public void Interact()
-    {
-        if (blockType == BlockType.STATIC)
-        {
-            Debug.Log("This block is static and cannot be interacted with.");
-            return;
-        }
+    //public void Interact()
+    //{
+    //    if (blockType == BlockType.STATIC)
+    //    {
+    //        Debug.Log("This block is static and cannot be interacted with.");
+    //        return;
+    //    }
 
-        Debug.Log("Interacting with block: " + gameObject.name);
-    }
+    //    Debug.Log("Interacting with block: " + gameObject.name);
+    //}
 }

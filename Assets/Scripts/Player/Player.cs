@@ -8,21 +8,29 @@ public class Player : MonoBehaviour
 {
     public Vector3 coordinates { get; private set; }
 
+    public AudioClip moveSound;
+    public AudioClip turnSound;
+    public AudioClip levitateSound;
+
     private Queue<PlayerAction> actionQueue = new Queue<PlayerAction>();
     private bool actionInProgress = false;
+    public AudioSource audioSource { get; private set; }
 
     void Awake()
     {
+        audioSource = GetComponent<AudioSource>();
         UpdateCoordinates();
     }
 
     void Start()
     {
-        //EnqueueAction(new MovementAction(4, 1));
-        //EnqueueAction(new InteractionAction());
-        //EnqueueAction(new RotationAction("right"));
-        //EnqueueAction(new MovementAction(2, 1));
-        //EnqueueAction(new InteractionAction());
+#if UNITY_EDITOR
+        EnqueueAction(new MovementAction(4, 1));
+        EnqueueAction(new InteractionAction());
+        EnqueueAction(new RotationAction("right"));
+        EnqueueAction(new MovementAction(2, 1));
+        EnqueueAction(new InteractionAction());
+#endif
     }
 
     private void UpdateCoordinates()
@@ -108,6 +116,9 @@ public class Player : MonoBehaviour
         float elapsedTime = 0f;
         float journeyTime = Quaternion.Angle(startRotation, targetRotation) / (speed * 100);
 
+        audioSource.clip = turnSound;
+        audioSource.Play();
+
         while (elapsedTime < journeyTime)
         {
             elapsedTime += Time.deltaTime;
@@ -118,6 +129,8 @@ public class Player : MonoBehaviour
         }
 
         transform.rotation = targetRotation;
+
+        audioSource.Stop();
     }
 
     public IEnumerator Interact()
@@ -148,15 +161,29 @@ public class Player : MonoBehaviour
             float elapsedTime = 0f;
             Vector3 targetPosition = transform.position;
             Vector3 jumpPosition = targetPosition + new Vector3(0, 0.5f, 0);
+            bool soundStarted = false;
+
             while (elapsedTime < journeyTime)
             {
                 elapsedTime += Time.deltaTime;
                 float progress = elapsedTime / journeyTime;
+
+                if (!soundStarted && progress > 0.1f)
+                {
+                    audioSource.clip = levitateSound;
+                    audioSource.loop = true;
+                    audioSource.Play();
+                    soundStarted = true;
+                }
+
                 progress = Mathf.SmoothStep(0, 1, progress);
                 transform.position = Vector3.Lerp(targetPosition, jumpPosition, progress);
                 yield return null;
             }
+
             transform.position = jumpPosition;
+
+            audioSource.Stop();
 
             yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
             yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
@@ -216,10 +243,27 @@ public class Player : MonoBehaviour
         float journeyTime = Vector3.Distance(startPosition, targetPosition) / speed;
         float elapsedTime = 0f;
 
+        bool soundStarted = false;
+
         while (elapsedTime < journeyTime)
         {
+
             elapsedTime += Time.deltaTime;
             float progress = elapsedTime / journeyTime;
+
+            if (!soundStarted && progress > 0.1f)
+            {
+                audioSource.clip = moveSound;
+                audioSource.loop = true;
+                audioSource.Play();
+                soundStarted = true;
+            }
+            else if (soundStarted && progress > 0.9f)
+            {
+                audioSource.Stop();
+                //soundStarted = false;
+            }
+
             progress = Mathf.SmoothStep(0, 1, progress);
             transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
             yield return null;
@@ -259,11 +303,6 @@ public class Player : MonoBehaviour
             transform.position = targetPosition;
             UpdateCoordinates();
         }
-
-        else if (won)
-        {
-
-        }
     }
 }
 
@@ -285,7 +324,6 @@ public class MovementAction : PlayerAction
 
     public override IEnumerator Execute(Player player)
     {
-        // set direction to players current orientation
         Vector3 direction = player.transform.forward;
         yield return player.Move(direction, distance, speed);
     }

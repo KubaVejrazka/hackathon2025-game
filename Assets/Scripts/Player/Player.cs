@@ -17,9 +17,9 @@ public class Player : MonoBehaviour
 
     void Start()
     {
-        EnqueueAction(new MovementAction(3, 1));
-        EnqueueAction(new RotationAction("right"));
-        EnqueueAction(new MovementAction(3, 1));
+        //EnqueueAction(new MovementAction(3, 1));
+        //EnqueueAction(new RotationAction("right"));
+        //EnqueueAction(new MovementAction(3, 1));
     }
 
     private void UpdateCoordinates()

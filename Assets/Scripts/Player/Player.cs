@@ -28,10 +28,15 @@ public class Player : MonoBehaviour
     void Start()
     {
 #if UNITY_EDITOR
-        EnqueueAction(new MovementAction(4, 1));
-        // EnqueueAction(new InteractionAction());
-        EnqueueAction(new RotationAction("right"));
-        EnqueueAction(new MovementAction(2, 1));
+        for (int i = 0; i < 3; i++)
+        {
+            EnqueueAction(new MovementAction(2, 1));
+            EnqueueAction(new RotationAction("left"));
+            EnqueueAction(new MovementAction(1, 1));
+            EnqueueAction(new RotationAction("right"));
+            EnqueueAction(new MovementAction(2, 1));
+            EnqueueAction(new RotationAction("right"));
+        }
         EnqueueAction(new InteractionAction());
 #endif
     }

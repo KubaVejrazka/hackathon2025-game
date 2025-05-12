@@ -156,7 +156,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSound: {fileID: 8300000, guid: 5460702d4dac11241a387540d7b364e1, type: 3}
   turnSound: {fileID: 8300000, guid: 291d8b9d21ba17246bba71b0ffd2aeb1, type: 3}
-  levitateSound: {fileID: 8300000, guid: b4eda2ac3e006624c8e7d77c0da2f890, type: 3}
+  levitateSound: {fileID: 8300000, guid: 62e1105e1c37aca41b7d8ae5c9da426f, type: 3}
+  interactSound: {fileID: 8300000, guid: 1eea266e9ff21a148be1e67e117a3aa8, type: 3}
+  failSound: {fileID: 8300000, guid: 9c30fb176c9e86c4e8bc6207476b1b2a, type: 3}
+  winSound: {fileID: 8300000, guid: e3bad2ad68f982c4482a83360a682fdd, type: 3}
 --- !u!4 &152501251
 Transform:
   m_ObjectHideFlags: 0

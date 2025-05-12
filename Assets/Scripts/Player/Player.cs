@@ -12,6 +12,8 @@ public class Player : MonoBehaviour
     public AudioClip turnSound;
     public AudioClip levitateSound;
     public AudioClip interactSound;
+    public AudioClip failSound;
+    public AudioClip winSound;
 
     private Queue<PlayerAction> actionQueue = new Queue<PlayerAction>();
     private bool actionInProgress = false;
@@ -27,7 +29,7 @@ public class Player : MonoBehaviour
     {
 #if UNITY_EDITOR
         EnqueueAction(new MovementAction(4, 1));
-        EnqueueAction(new InteractionAction());
+        // EnqueueAction(new InteractionAction());
         EnqueueAction(new RotationAction("right"));
         EnqueueAction(new MovementAction(2, 1));
         EnqueueAction(new InteractionAction());
@@ -143,12 +145,23 @@ public class Player : MonoBehaviour
         yield return new WaitForSeconds(audioSource.clip.length);
     }
 
+    public IEnumerator PlayFailSound()
+    {
+        audioSource.clip = failSound;
+        audioSource.loop = false;
+        audioSource.Play();
+
+        yield return new WaitForSeconds(audioSource.clip.length);
+    }
+
     public IEnumerator Interact()
     {
         Block blockInFront = Block.FindBlockAtCoordinate(coordinates + transform.forward);
 
         if (blockInFront == null || blockInFront.blockType == BlockType.STATIC)
         {
+            yield return StartCoroutine(PlayFailSound());
+
             yield return StartCoroutine(Rotate(new Vector3(0, -15, 0), 1));
             yield return StartCoroutine(Rotate(new Vector3(0, 30, 0), 1));
             yield return StartCoroutine(Rotate(new Vector3(0, -15, 0), 1));
@@ -197,9 +210,11 @@ public class Player : MonoBehaviour
 
             audioSource.Stop();
 
+            /*
             yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
             yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
             yield return StartCoroutine(Rotate(new Vector3(0, 120, 0), 3));
+            */
 
             journeyTime = 0.5f;
             elapsedTime = 0f;
@@ -212,6 +227,14 @@ public class Player : MonoBehaviour
                 yield return null;
             }
             transform.position = targetPosition;
+
+            audioSource.Stop();
+            audioSource.clip = winSound;
+            audioSource.loop = false;
+            audioSource.Play();
+            yield return new WaitForSeconds(audioSource.clip.length);
+
+            actionQueue.Clear();
 
             Debug.Log("win");
             WebGLMessageHandler.SendToJavaScript(new WebGLMessageHandler.OutBrowserMessage
@@ -286,6 +309,11 @@ public class Player : MonoBehaviour
 
         if (interrupted)
         {
+            audioSource.Stop();
+            audioSource.clip = failSound;
+            audioSource.loop = false;
+            audioSource.Play();
+
             //actionQueue.Clear();
 
             journeyTime = 0.25f;
